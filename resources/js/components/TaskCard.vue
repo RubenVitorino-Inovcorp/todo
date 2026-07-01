@@ -1,9 +1,24 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import { CalendarDays, Trash2, Ellipsis, Pencil } from '@lucide/vue';
 import type { AcceptableValue } from 'reka-ui';
 import { computed, ref, watch } from 'vue';
-import SpotlightCard from './ui/SpotlightCard.vue';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+    update,
+    destroy,
+    edit,
+    show,
+} from '@/actions/App/Http/Controllers/TaskController';
+import EditTask from '@/components/EditTask.vue';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     Select,
     SelectContent,
@@ -11,20 +26,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { CalendarDays, Pencil, Trash2, Ellipsis } from '@lucide/vue';
-import { router } from '@inertiajs/vue3';
-import {
-    update,
-    destroy,
-    edit,
-} from '@/actions/App/Http/Controllers/TaskController';
+import SpotlightCard from './ui/SpotlightCard.vue';
 
 interface Task {
     id: number;
@@ -71,8 +73,13 @@ const handleToggle = () => {
 const isCompleted = computed(() => localChecked.value);
 
 const changePriority = (newPriority: AcceptableValue) => {
-    if (typeof newPriority !== 'string') return;
-    if (newPriority === props.task.priority) return;
+    if (typeof newPriority !== 'string') {
+return;
+}
+
+    if (newPriority === props.task.priority) {
+return;
+}
 
     router.put(
         update.url(props.task.id),
@@ -102,7 +109,9 @@ const priorityDot: Record<string, string> = {
 };
 
 const formattedDueDate = computed(() => {
-    if (!props.task.due_date) return null;
+    if (!props.task.due_date) {
+return null;
+}
 
     const dueDate = new Date(props.task.due_date);
     const now = new Date();
@@ -118,11 +127,13 @@ const formattedDueDate = computed(() => {
     if (dueDateOnly.getTime() === today.getTime()) {
         return { text: 'Hoje', isOverdue: false, isToday: true };
     }
+
     if (dueDateOnly.getTime() === tomorrow.getTime()) {
         return { text: 'Amanhã', isOverdue: false, isToday: false };
     }
 
     const isOverdue = dueDateOnly < today;
+
     return {
         text: dueDate.toLocaleDateString('pt-PT', {
             day: 'numeric',
@@ -134,25 +145,33 @@ const formattedDueDate = computed(() => {
 });
 
 const dueDateBadgeClass = computed(() => {
-    if (!formattedDueDate.value) return '';
-    if (formattedDueDate.value.isOverdue)
-        return 'bg-red-500/15 text-red-400 border-red-500/20';
-    if (formattedDueDate.value.isToday)
-        return 'bg-amber-500/15 text-amber-400 border-amber-500/20';
+    if (!formattedDueDate.value) {
+return '';
+}
+
+    if (formattedDueDate.value.isOverdue) {
+return 'bg-red-500/15 text-red-600 border-red-500/20';
+}
+
+    if (formattedDueDate.value.isToday) {
+return 'bg-amber-500/15 text-content border-amber-500/20';
+}
+
     return 'bg-muted/50 text-muted-foreground border-border/50';
 });
 </script>
 
 <template>
     <SpotlightCard
-        class="group flex min-h-[320px] flex-col transition-all duration-300 ease-out"
+        class="group flex min-h-[320px] flex-col transition-all duration-300 ease-out hover:cursor-pointer"
+        @click="router.visit(show.url(task.id))"
     >
         <!-- Top: Checkbox + Título -->
         <div class="flex items-start gap-3">
             <Checkbox
                 v-model="localChecked"
                 class="mt-0.5 size-5 shrink-0 rounded-full border-2 transition-colors duration-200 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500 text-white"
-                @click="handleToggle"
+                @click.stop="handleToggle"
                 />
             <h3
                 :class="[
@@ -197,7 +216,7 @@ const dueDateBadgeClass = computed(() => {
         </div>
 
         <!-- Footer: ... menu / Prioridade select / Botão de editar -->
-        <div class="mt-3 flex items-center justify-between">
+        <div class="mt-3 flex items-center justify-between" @click.stop>
             <!-- Left: More menu -->
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
@@ -261,14 +280,7 @@ const dueDateBadgeClass = computed(() => {
                     </SelectItem>
                 </SelectContent>
             </Select>
-
-            <Button
-                size="icon"
-                class="size-8 rounded-full bg-primary text-white hover:bg-primary/80 hover:cursor-pointer"
-                @click="navigateToEdit"
-            >
-                <Pencil class="size-3.5 text-background" />
-            </Button>
+            <EditTask :task="task" />
         </div>
     </SpotlightCard>
 </template>

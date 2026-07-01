@@ -6,7 +6,7 @@
     @blur="handleBlur"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
-    :class="['relative rounded-3xl border overflow-hidden p-8', className]"
+    :class="['relative rounded-3xl border overflow-hidden p-8 bg-background/80', className]"
   >
     <div
       class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 ease-in-out"
@@ -33,7 +33,7 @@ interface SpotlightCardProps {
   spotlightColor?: string;
 }
 
-const { className = '', spotlightColor = 'rgba(255, 255, 255, 0.25)' } = defineProps<SpotlightCardProps>();
+const { className = '', spotlightColor = 'rgba(75, 75, 75, 0.25)' } = defineProps<SpotlightCardProps>();
 
 const divRef = useTemplateRef<HTMLDivElement>('divRef');
 const isFocused = ref<boolean>(false);

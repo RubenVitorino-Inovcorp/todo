@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
 
 class TaskController extends Controller
 {
@@ -16,18 +16,58 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $tasks = $request->user()->tasks()->orderBy('created_at', 'asc')->get();
+        $filters = $request->only('search', 'sort');
+        $searchQuery = $filters['search'] ?? $request->input('filters.search');
 
-        $highPriorityTasks = $tasks->where('priority', 'high')->values();
-        $mediumPriorityTasks = $tasks->where('priority', 'medium')->values();
-        $lowPriorityTasks = $tasks->where('priority', 'low')->values();
+        // Limpar ordenações inválidas
+        if (! in_array($filters['sort'] ?? null, ['titulo_asc', 'titulo_desc', 'vencimento_asc', 'vencimento_desc'], true)) {
+            $filters['sort'] = 'titulo_asc';
+        }
+
+        $query = $request->user()->tasks();
+
+        // Aplicar busca (search)
+        if ($searchQuery) {
+            $query->where('title', 'like', "%{$searchQuery}%");
+        }
+
+        // Aplicar ordenação (sort)
+        switch ($filters['sort']) {
+            case 'titulo_asc':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'titulo_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'vencimento_asc':
+                $query->orderBy('due_date', 'asc');
+                break;
+            case 'vencimento_desc':
+                $query->orderBy('due_date', 'desc');
+                break;
+            default:
+                $query->orderBy('created_at', 'asc');
+                break;
+        }
+
+        $tasks = $query->get();
+
+        $pendingTasks = $tasks->where('status', 'pending')->values();
         $completedTasks = $tasks->where('status', 'completed')->values();
+
+        $highPriorityTasks = $pendingTasks->where('priority', 'high')->values();
+        $mediumPriorityTasks = $pendingTasks->where('priority', 'medium')->values();
+        $lowPriorityTasks = $pendingTasks->where('priority', 'low')->values();
 
         return Inertia::render('tasks/Index', [
             'highPriorityTasks' => $highPriorityTasks,
             'mediumPriorityTasks' => $mediumPriorityTasks,
             'lowPriorityTasks' => $lowPriorityTasks,
             'completedTasks' => $completedTasks,
+            'filters' => [
+                'search' => $searchQuery,
+                'sort' => $filters['sort'],
+            ],
         ]);
     }
 

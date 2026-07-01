@@ -2,11 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\TaskPriority;
-use App\Enums\TaskStatus;
 
 class UpdateTaskRequest extends FormRequest
 {
@@ -27,11 +27,11 @@ class UpdateTaskRequest extends FormRequest
     {
         // O prefixo 'sometimes' diz ao Laravel para validar o campo apenas se ele estiver presente no payload do pedido
         return [
-            'title'       => ['sometimes', 'required', 'string', 'min:3', 'max:255'],
+            'title' => ['sometimes', 'required', 'string', 'min:3', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'priority'    => ['sometimes', 'required', Rule::enum(TaskPriority::class)],
-            'status'      => ['sometimes', 'required', Rule::enum(TaskStatus::class)],
-            'due_date'    => ['nullable', 'date', 'after_or_equal:today'],
+            'priority' => ['sometimes', 'required', Rule::enum(TaskPriority::class)],
+            'status' => ['sometimes', 'required', Rule::enum(TaskStatus::class)],
+            'due_date' => ['nullable', 'date'],
         ];
     }
 }

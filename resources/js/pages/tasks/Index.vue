@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import tasks from '@/routes/tasks/index';
+import { Head, router } from '@inertiajs/vue3';
+import { Search, Settings, User, SlidersHorizontal } from '@lucide/vue'
+import { h, ref } from 'vue'
 import TaskCard from '@/components/TaskCard.vue';
+import TaskFilterDropdown from '@/components/TaskFilterDropdown.vue';
+import TaskSearchPopover from '@/components/TaskSearchPopover.vue';
+import Dock from "@/components/ui/Dock.vue";
+import appearance from '@/routes/appearance/index';
+import profile from '@/routes/profile/index';
+import tasks from '@/routes/tasks/index';
 
 defineOptions({
     layout: {
@@ -26,16 +33,64 @@ interface Task {
 }
 
 const props = defineProps<{
-    pendingTasks: Array<Task>;
     completedTasks: Array<Task>;
     highPriorityTasks: Array<Task>;
     lowPriorityTasks: Array<Task>;
     mediumPriorityTasks: Array<Task>;
+    filters: {
+        search?: string | null;
+        sort?: string | null;
+    };
 }>();
+
+const filterOpen = ref(false);
+const searchOpen = ref(false);
+
+const items = [
+  {
+    icon: () => h(Search, { class: 'size-5' }),
+    label: 'Procurar',
+    onClick: (e?: MouseEvent) => {
+        e?.stopPropagation();
+        filterOpen.value = false;
+        searchOpen.value = !searchOpen.value;
+    }
+  },
+  {
+    icon: () => h(SlidersHorizontal, { class: 'size-5' }),
+    label: 'Filtros',
+    onClick: (e?: MouseEvent) => { 
+        e?.stopPropagation();
+        searchOpen.value = false;
+        filterOpen.value = !filterOpen.value; 
+    }
+  },
+  {
+    icon: () => h(User, { class: 'size-5' }),
+    label: 'Perfil',
+    onClick: () => router.visit(profile.edit().url)
+  },
+  {
+    icon: () => h(Settings, { class: 'size-5' }),
+    label: 'Configurações',
+    onClick: () => router.visit(appearance.edit().url)
+  },
+];
 </script>
 
 <template>
     <Head title="Tarefas" />
+
+    <div class="fixed z-50 bottom-10 right-10 left-10">
+        <TaskSearchPopover v-model:open="searchOpen" :filters="props.filters" />
+        <TaskFilterDropdown v-model:open="filterOpen" :filters="props.filters" />
+        <Dock
+            :items="items"
+            :panel-height="68"
+            :base-item-size="50"
+            :magnification="70"
+        />
+    </div>
 
     <div class="flex flex-col gap-8 p-4 md:p-6">
         <div v-if="highPriorityTasks.length > 0" class="flex flex-col gap-4">
